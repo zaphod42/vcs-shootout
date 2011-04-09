@@ -1,55 +1,5 @@
 #!/usr/bin/env perl
 
-package MartialArt::dialog;
-
-use strict;
-use warnings;
-
-my @commands;
-
-sub on {
-    my ($branch_name, $actions) = @_;
-
-    print "on $branch_name\n";
-    print "\t" and $_->() for (@$actions);
-}
-
-sub perform(&) {
-    @commands = ();
-    shift->();
-    return [@commands];
-}
-
-sub branch($$) {
-    my ($from, $to) = @_;
-
-    print "branch $from to $to\n";
-}
-
-sub merge($$) {
-    my ($from, $to) = @_;
-
-    print "merge $from into $to\n";
-}
-
-sub add($$) {
-    my ($file, $contents) = @_;
-
-    push @commands, sub { print "add file named <$file> containing <$contents>\n" }
-}
-
-sub change($$) {
-    my ($file, $new_contents) = @_;
-
-    push @commands, sub { print "change file named <$file> to contain <$new_contents>\n" }
-}
-
-sub commit($) {
-    my ($msg) = @_;
-
-    push @commands, sub { print "commit with message <$msg>\n" }
-}
-
 package Student;
 
 use strict;
@@ -59,19 +9,30 @@ use Safe;
 
 sub of { 
     my ($class, $style) = @_;
-    my $safe = Safe->new;
+    my $dojo = Safe->new;
+    my $art_form = "MartialArt::$style";
 
-    $safe->share_from("MartialArt::$style" => [qw(on perform branch merge add change commit)]);
+    require "MartialArt/$style.pm";
 
-    return bless { dojo => $safe }, $class;
+    $dojo->share_from($art_form => [qw(on perform branch merge add change commit)]);
+
+    bless { art_form => $art_form, dojo => $dojo }, $class;
 }
 
 sub demonstrate {
     my ($self, $kata) = @_;
 
-    $self->{dojo}->rdo($kata);
+    my $steps = do {
+        local $/;
+        open my ($fh), $kata;
+        <$fh>;
+    };
 
-    print $@ if $@;
+    $self->{art_form}->bow_in($kata);
+    $self->{dojo}->reval($steps);
+    print STDERR $@ if $@;
+    $self->{art_form}->bow_out($kata);
+
 }
 
 package main;
@@ -79,4 +40,6 @@ package main;
 use strict;
 use warnings;
 
-Student->of('dialog')->demonstrate("one-file-same-change.vs");
+unshift @ARGV, "dialog" if @ARGV < 2;
+
+Student->of($ARGV[0])->demonstrate($ARGV[1]);
