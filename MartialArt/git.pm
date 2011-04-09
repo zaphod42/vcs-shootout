@@ -61,6 +61,7 @@ sub merge {
 sub add {
     my ($file, $contents) = @_;
 
+    print "===> creating $file with contents <$contents>\n";
     push @commands, sub { 
         open my ($target), "> $file";
         print $target $contents;
@@ -73,7 +74,14 @@ sub add {
 sub change {
     my ($file, $new_contents) = @_;
 
-    add($file, $new_contents);
+    print "===> changing $file to contain <$new_contents>\n";
+    push @commands, sub { 
+        open my ($target), "> $file";
+        print $target $new_contents;
+        close $target;
+
+        git "add", $file;
+    }
 }
 
 sub commit {
