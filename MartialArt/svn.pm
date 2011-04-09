@@ -70,7 +70,7 @@ sub merge {
     svn "switch", location($to) if $opponent ne $to;
     $opponent = $to;
 
-    svn "merge", location($from), ".";
+    svn "merge", "--accept", "postpone", location($from), ".";
 }
 
 sub add {
