@@ -4,13 +4,14 @@ use strict;
 use warnings;
 
 use File::Temp;
-use IO::File;
 
 my @commands;
 
 my $floor;
+my $branch;
 
 sub git {
+    print "===> git ", join(" ", @_), "\n";
     system("git", @_) == 0 or die "Error executing git: $?";
 }
 
@@ -20,6 +21,7 @@ sub bow_in {
     $floor = File::Temp->newdir;
     chdir $floor->dirname;
     git "init";
+    $branch = "master";
 }
 
 sub bow_out {
@@ -30,7 +32,8 @@ sub bow_out {
 sub on {
     my ($branch_name, $actions) = @_;
 
-    git "checkout", $branch_name;
+    git "checkout", $branch_name if $branch ne $branch_name;
+    $branch = $branch_name;
     $_->() for (@$actions);
 }
 
@@ -43,14 +46,15 @@ sub perform(&) {
 sub branch {
     my ($from, $to) = @_;
 
-    git "checkout", $from;
-    git "branch", $to;
+    git "branch", $to, $from;
 }
 
 sub merge {
     my ($from, $to) = @_;
 
-    git "checkout", $to;
+    git "checkout", $to if $branch ne $to;
+    $branch = $to;
+
     git "merge", $from;
 }
 
@@ -58,9 +62,9 @@ sub add {
     my ($file, $contents) = @_;
 
     push @commands, sub { 
-        my $target = IO::File->new("> $file");
+        open my ($target), "> $file";
         print $target $contents;
-        $target->close();
+        close $target;
 
         git "add", $file;
     }
