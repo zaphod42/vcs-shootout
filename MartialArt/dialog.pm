@@ -52,6 +52,12 @@ sub change {
     push @commands, sub { print "change file named <$file> to contain <$new_contents>\n" }
 }
 
+sub move {
+    my ($file, $new_name) = @_;
+
+    push @commands, sub { print "move file named <$file> to <$new_name>\n" }
+}
+
 sub commit {
     my ($msg) = @_;
 

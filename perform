@@ -14,7 +14,7 @@ sub of {
 
     require "MartialArt/$style.pm";
 
-    $dojo->share_from($art_form => [qw(on perform branch merge add change commit)]);
+    $dojo->share_from($art_form => [qw(on perform branch merge add change move commit)]);
 
     bless { art_form => $art_form, dojo => $dojo }, $class;
 }
