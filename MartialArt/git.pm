@@ -84,6 +84,15 @@ sub change {
     }
 }
 
+sub move {
+    my ($file, $new_name) = @_;
+
+    print "===> moving $file to $new_name\n";
+    push @commands, sub {
+        git "mv", $file, $new_name;
+    }
+}
+
 sub commit {
     my ($msg) = @_;
 
