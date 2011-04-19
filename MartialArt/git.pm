@@ -3,10 +3,14 @@ package MartialArt::git;
 use strict;
 use warnings;
 
+use Cwd;
 use File::Temp;
+use File::Find;
+use Archive::Tar;
 
 my @commands;
 
+my $home;
 my $floor;
 my $branch;
 
@@ -19,6 +23,7 @@ sub bow_in {
     my ($class, $kata) = @_;
 
     $floor = File::Temp->newdir;
+    $home = getcwd();
     chdir $floor->dirname;
     git "init";
     $branch = "master";
@@ -26,6 +31,10 @@ sub bow_in {
 
 sub bow_out {
     my ($class, $kata) = @_;
+    my $tar = Archive::Tar->new; 
+    find(sub { $tar->add_files($File::Find::name) }, $floor->dirname);
+    chdir $home;
+    $tar->write("${kata}.tar.gz", COMPRESS_GZIP);
     $floor = undef;
 }
 
